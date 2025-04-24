@@ -24,7 +24,6 @@ void introSort(int *vet, int ini, int fim, int prof_max, benchData *benchDat, in
 int* geraVetRandom(int tam, int seed);
 int* geraQuaseOrdenados(int tam, int porcentagem);
 int* geraOrdenados(int tam, int ordem);
-double calculaTempo(LARGE_INTEGER tempoIni, LARGE_INTEGER tempoFim, LARGE_INTEGER freq);
 double calculaMediaTempo(const double vetorTempo[]);
 int calculaMediaTrocas(benchData *benchData);
 long long int calculaMediaComparacoes(benchData *benchData);
