@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
+#include <windows.h>
 
 void selection(int *vetor, benchData *benchData, int indDado, int tam){
     int menor, aux, i;
@@ -151,93 +152,90 @@ void mergeSort(int *vetor, int inicio, int fim, benchData *benchData, int indDad
     return;
 }
 
-void criaHeap(int *vetor, int ini, int fim, benchData *benchData, int indDado){
-    int raiz = ini;
-    int filho;
-    int aux = vetor[raiz];
-
-    while ((filho = 2 * raiz + 1) <= fim) { // Se tem filho na direita e ele é maior que o da esquerda
-        if (filho + 1 <= fim) {
-            benchData->mCmp[indDado]++;
-            if (vetor[filho] < vetor[filho + 1]) // filho aponta p maior
-                filho++;
-        }
-
-        benchData->mCmp[indDado]++;
-        if (aux < vetor[filho]) {
-            vetor[raiz] = vetor[filho];  // sobe o maior filho p pai
-            raiz = filho;
-            benchData->mTrocas[indDado]++;
-        } else {
-            filho=fim+1;  // heap ja está ajustado entao quebra o loop do while
-        }
-    }
-
-    vetor[raiz] = aux;  //seta o valor original de volta
-    return;
-}
-
 
 void heapSort(int *vetor, int tam, benchData *benchData, int indDado){
-    int aux;
+    int i, aux;
 
-    for (int i = (tam - 1) / 2; i >= 0; i--) { // heapify a partir do vetor
+    for (i = (tam - 1) / 2; i >= 0; i--)  // heapify a partir do vetor
         criaHeap(vetor, i, tam - 1, benchData, indDado);
-    }
 
-    for (int i = tam - 1; i >= 1; i--) { // pega raiz e reorganiza o heap
+    for (i = tam - 1; i >= 1; i--){ // pega raiz e reorganiza o heap
+
         aux = vetor[0]; // Troca o maior elemento(0) com o último elemento não ordenado
         vetor[0] = vetor[i];
         vetor[i] = aux;
         benchData->mTrocas[indDado]++;
-
         criaHeap(vetor, 0, i - 1, benchData, indDado); // Reajusta o heap
-
     }
-    return;
 }
 
-void insertionIntro(int* vetor, int ini, int fim, benchData *benchData, int indDado){
-    int aux, pos;
+void criaHeap(int *vetor, int ini, int fim, benchData *benchData, int indDad){
+    int aux, i;
 
-    for (int marcador = ini + 1; marcador <= fim; marcador++) {
+    aux = vetor[ini];
+    i = ini * 2 + 1;
+
+    while(i <= fim){ // Se tem filho na direita e ele é maior que o da esquerda
+        if(i < fim) {
+            benchData->mCmp[indDad]++;
+            if (vetor[i] < vetor[i + 1]) // filho aponta p maior
+                i++;
+        }
+        benchData->mCmp[indDad]++;
+        if(aux < vetor[i]){
+            vetor[ini] = vetor[i]; // sobe o maior filho p pai
+            ini = i;
+            i = 2 * ini + 1;
+            benchData->mTrocas[indDad]++;
+        }
+        else
+            i = fim + 1; // heap ja está ajustado entao quebra o loop do while
+    }
+    vetor[ini] = aux; //seta o valor original de volta
+}
+
+void insertionIntro(int* vetor, int ini, int fim, benchData *benchData, int indDad){
+    int marcador, aux, pos;
+
+    // varre o vetor a partir de ini+1 até fim
+    for(marcador = ini + 1; marcador <= fim; marcador++) {
         aux = vetor[marcador];
         pos = marcador - 1;
 
-        while (pos >= ini && aux < vetor[pos]) {
+        // 'empurra' os elementos maiores que aux pra frente
+        while(pos >= 0 && aux < vetor[pos]){
             vetor[pos + 1] = vetor[pos];
-            pos--;
-            benchData->mCmp[indDado]++;
+            pos --;
         }
-
-        benchData->mCmp[indDado]++;  // conta a comparação que falhou
-
-        if (vetor[pos + 1] != aux) {
-            benchData->mTrocas[indDado]++;
+        // se deslocou conta a troca
+        if(vetor[pos + 1] != aux) {
+            benchData->mTrocas[indDad]++;
         }
-        vetor[pos + 1] = aux;
+        vetor[pos + 1] = aux; // coloca o elemento na posicao correta
+        benchData->mCmp[indDad]++; // conta a comparacao de falha do while
     }
-    return;
 }
 
-void introSort(int *vetor, int ini, int fim, int maxDp, benchData *benchData, int indDado){
-    int tam = fim - ini + 1;
+void introSort(int *vetor, int ini, int fim, int maxDp, benchData *benchData, int indDad){
+    int pivo, tam;
 
-    if (tam <= 16) { // se for menor q 16
-        insertionIntro(vetor, ini, fim, benchData, indDado);
+    tam = (fim - ini) + 1;
+
+    if(tam <= 16) { // se for menor q 16, convencao empirica, geralmente variam de 16 a 32
+        insertionIntro(vetor, ini, fim, benchData, indDad);
         return;
     }
 
-    if (maxDp == 0) { // se a pilha atingir a profundidade maxima usa o heapsort
-        heapSort(vetor + ini, tam, benchData, indDado);
+    if(maxDp == 0) { // se a pilha atingir a profundidade maxima usa o heapsort
+        heapSort(vetor, tam, benchData, indDad);
         return;
     }
 
-    // ordena pelo quicksort
-    int pivo = particiona(vetor, ini, fim, benchData, indDado);
-    introSort(vetor, ini, pivo - 1, maxDp - 1, benchData, indDado);
-    introSort(vetor, pivo + 1, fim, maxDp - 1, benchData, indDado);
-    return;
+    else{ // ordena pelo quicksort
+        pivo = particiona(vetor, ini, fim, benchData, indDad);
+        introSort(vetor, ini, pivo - 1, maxDp - 1, benchData, indDad);
+        introSort(vetor, pivo + 1, fim, maxDp - 1, benchData, indDad);
+    }
 }
 
 int* geraVetRandom(int tam, int seed){
@@ -254,3 +252,160 @@ int* geraVetRandom(int tam, int seed){
 
     return vetor;
 }
+
+int* geraQuaseOrdenados(int tam, int porcentagem){
+    int *vetor, i, qtdDesordenados, pos1, pos2, aux;
+    vetor = (int*) malloc(tam * sizeof(int));
+    if(!vetor){
+        printf("\nErro ao alocar memória");
+        return NULL;
+    }
+    for(i = 0; i < tam; i++)
+        vetor[i] = i;
+    qtdDesordenados = (tam * porcentagem) / 100;
+    srand(time(NULL));
+    for (i = 0; i < qtdDesordenados; i++) {
+        pos1 = rand() % tam;
+        pos2 = rand() % tam;
+        aux = vetor[pos1];
+        vetor[pos1] = vetor[pos2];
+        vetor[pos2] = aux;
+    }
+    return vetor;
+}
+
+int* geraOrdenados(int tam, int ordem) {
+    int *vetor;
+    vetor = (int*)malloc(tam * sizeof(int));
+    if (vetor == NULL) {
+        printf("\nErro ao alocar memória");
+        return NULL;
+    }
+    if (ordem == 0) {
+        for (int i = 0; i < tam; i++)
+            vetor[i] = i;
+    } else if (ordem == 1) {
+        for (int i = 0; i < tam; i++)
+            vetor[i] = tam - 1 - i;
+    } else {
+        printf("Erro: Valor de ordem inválido.\n");
+        free(vetor);
+        return NULL;
+    }
+    return vetor;
+}
+
+double calculaMediaTempo(const double vetorTempo[]) {
+    double soma = 0.0;
+    for (int i = 0; i < 5; i++)
+        soma += vetorTempo[i];
+    return soma / 5;
+}
+
+long long int calculaMediaComparacoes(benchData *benchData) {
+    long long int soma = 0;
+    for (int i = 0; i < 5; i++)
+        soma += benchData->mCmp[i];
+    return soma / 5;
+}
+
+int calculaMediaTrocas(benchData *benchData) {
+    int soma = 0;
+    for (int i = 0; i < 5; i++)
+        soma += benchData->mTrocas[i];
+    return soma / 5;
+}
+
+void iniciaBenchData(benchData *benchData) {
+    for (int i = 0; i < 5; i++) {
+        benchData->mTrocas[i] = 0;
+        benchData->mCmp[i] = 0;
+    }
+}
+
+int menuBench() {
+    int opcao;
+    printf("\t\tSELECIONE O METODO DE ORDENACAO");
+    printf("\n1 - Insertion\n2 - Selection\n3 - MergeSort\n4 - QuickSort\n5 - IntroSort\n"
+           "\n> ");
+    scanf("%d", &opcao);
+    return opcao;
+}
+
+void printTempo(int opcao) {
+    int i;
+    switch(opcao) {
+        case 1:
+            printf(  "\t\t\tINSERTION SORT - Tempo de Execucao (ms)\n");
+            break;
+        case 2:
+            printf( "\t\t\tSELECTION SORT - Tempo de Execucao (ms)\n");
+            break;
+        case 3:
+            printf("\t\t\tMERGESORT - Tempo de Execucao (ms)\n");
+            break;
+        case 4:
+            printf("\t\t\tQUICKSORT - Tempo de Execucao (ms)\n");
+            break;
+        case 5:
+            printf("\t\t\tINTROSORT - Tempo de Execucao (ms)\n");
+            break;
+        default:
+            return;
+    }
+    printf("================================================================================");
+    printf("\nTeste\tTam. Entrada\tAleatorio\tCrescente\tDecrescente\tQuase Ordenado\n");
+    printf("================================================================================");
+
+    printf("\n");
+}
+
+void comps(benchData benchData, int tam) {
+    int i;
+    printf("\n\t\t\t\tComparacoes\n");
+    printf("================================================================================");
+    printf("\nTeste\tTam. Entrada\tAleatorio\tCrescente\tDecrescente\tQuase Ordenado\n");
+    printf("================================================================================");
+    printf("\n");
+    printCmp(benchData, 5);
+}
+
+void trocas(benchData benchData, int tam) {
+    int i;
+    printf("\n\t\t\t\tTrocas\n");
+    printf("================================================================================");
+    printf("\nTeste\tTam. Entrada\tAleatorio\tCrescente\tDecrescente\tQuase Ordenado\n");
+    printf("================================================================================");
+    printf("\n");
+    printTrocas(benchData, 5);
+}
+
+void printTempos(int teste, double tempoAlt, double tempoCresc, double tempoDecresc, double tempoQseOrd, int tam) {
+    printf("%d\t%-16d%-16.5f%-16.5f%-16.5f%-16.5f\n", teste, tam, tempoAlt, tempoCresc, tempoDecresc, tempoQseOrd);
+}
+
+void printTrocas(benchData benchData, int tam) {
+    int entrada = tam;
+    for(int i = 0; i < 5; i++) {
+        printf("%d\t%-16d", i + 1, entrada);
+        for(int j = 0; j < 4; j++) {
+            printf("%-16d", benchData.trocas[i][j]);
+        }
+        printf("\n");
+        entrada = entrada*10;
+    }
+}
+
+void printCmp(benchData benchData, int tam) {
+    int entrada = tam;
+    for(int i = 0; i < 5; i++) {
+        printf("%d\t%-16d", i + 1, entrada);
+        for(int j = 0; j < 4; j++) {
+            printf("%-16lld", benchData.cmp[i][j]);
+        }
+        printf("\n");
+        entrada = entrada*10;
+    }
+}
+
+
